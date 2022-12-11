@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
+import com.vangelnum.newsapp.ui.theme.NewsAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -33,48 +34,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val viewModel: MainViewModel by viewModels()
-            val photos by viewModel.items.collectAsState()
-            LazyColumn(modifier = Modifier.background(Color.Black)) {
-                items(photos.articles) {
-                    if (it.urlToImage != null) {
-                        Log.d("Tag",it.urlToImage + "")
-                        Card(shape = RoundedCornerShape(15.dp),
-                            modifier = Modifier.height(250.dp).padding(all = 10.dp)
-                        ) {
-                            SubcomposeAsyncImage(
-                                model = it.urlToImage,
-                                contentDescription = "image",
-                                contentScale = ContentScale.Crop,
-                                loading = {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color.Black),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(color = Color.Green)
-                                    }
-                                }
-                            )
-                        }
-                    }
-                    SelectionContainer {
-                        Text(
-                            text = it.title,
-                            textAlign = TextAlign.Start,
-                            modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
-                            color = Color.White,
-                            maxLines = 3,
-                            fontSize = 20.sp,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth(), color = Color.Black)
-                }
+            NewsAppTheme() {
+                val viewModel: MainViewModel by viewModels()
+                Navigation(viewModel)
             }
         }
     }
