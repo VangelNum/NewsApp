@@ -96,6 +96,6 @@ dependencies {
     //flowrow
     implementation "com.google.accompanist:accompanist-flowlayout:0.26.4-beta"
 
-
+    implementation("androidx.compose.material3:material3:1.0.1")
 
 }

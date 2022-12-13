@@ -3,17 +3,14 @@ package com.vangelnum.newsapp
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,18 +31,33 @@ import com.vangelnum.newsapp.data.News
 @Composable
 fun MainScreen(photos: News) {
     val context = LocalContext.current
-    val chips by remember { mutableStateOf(listOf("India", "France", "Spain","Netherland","Austarlia","Nepal")) }
+    val chips by remember {
+        mutableStateOf(listOf("India",
+            "France",
+            "Spain",
+            "Netherland",
+            "Austarlia",
+            "Nepal"))
+    }
     var chipState by remember { mutableStateOf("") }
+    var visible by remember {
+        mutableStateOf(false)
+    }
     Column {
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp),
-            mainAxisSpacing = 16.dp,
-            crossAxisSpacing = 16.dp,
-        ) {
-            chips.forEach {
-                
+        IconButton(onClick = { visible = !visible }) {
+            Icon(painter = painterResource(id = R.drawable.ic_baseline_filter_list_24),
+                contentDescription = "filter")
+        }
+        AnimatedVisibility(visible = visible) {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth(),
+            ) {
+                chips.forEach {
+                    SuggestionChipEachRow(chip = it, it == chipState) { chip ->
+                        chipState = chip
+                    }
+                }
             }
         }
         LazyColumn(modifier = Modifier.background(Color.Black)) {
