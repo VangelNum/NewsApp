@@ -68,10 +68,10 @@ fun Navigation(viewModel: MainViewModel) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route = Screens.MainScreen.route) {
-                MainScreen(photos = photos)
+                MainScreen(photos = photos, viewModel = viewModel)
             }
             composable(route = Screens.FavouriteScreen.route) {
-                FavouriteScreen()
+                FavouriteScreen(viewModel = viewModel)
             }
         }
     }

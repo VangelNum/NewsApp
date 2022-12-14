@@ -1,5 +1,6 @@
 package com.vangelnum.newsapp
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vangelnum.newsapp.data.News
@@ -11,8 +12,23 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    repository: MyRepository,
+    private val repository: MyRepository,
+    private val repositoryRoom: RoomRepository
 ) : ViewModel() {
+
+
+     fun addNewsDataBase(news: RoomEntity) {
+        viewModelScope.launch {
+            repositoryRoom.addNews(news)
+        }
+    }
+    fun deleteNewsDataBase(news: RoomEntity) {
+        viewModelScope.launch {
+            repositoryRoom.deleteNews(news)
+        }
+    }
+
+    var readAllData: LiveData<List<RoomEntity>> = repositoryRoom.getAll()
 
     private val _items = MutableStateFlow(News(emptyList(), "", 0))
     var items: StateFlow<News> = _items
@@ -25,4 +41,5 @@ class MainViewModel @Inject constructor(
             }
         }
     }
+
 }
