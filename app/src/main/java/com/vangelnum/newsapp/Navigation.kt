@@ -1,5 +1,6 @@
 package com.vangelnum.newsapp
 
+import android.util.Log
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.*
@@ -22,9 +23,9 @@ fun Navigation(viewModel: MainViewModel) {
     val photos by viewModel.items.collectAsState()
     val items = listOf(
         Screens.MainScreen,
-        Screens.FavouriteScreen
+        Screens.FavouriteScreen,
+        Screens.SearchScreen
     )
-
     Scaffold(
         topBar = {
             TopAppBar {
@@ -72,6 +73,9 @@ fun Navigation(viewModel: MainViewModel) {
             }
             composable(route = Screens.FavouriteScreen.route) {
                 FavouriteScreen(viewModel = viewModel)
+            }
+            composable(route = Screens.SearchScreen.route) {
+                SearchScreen()
             }
         }
     }
