@@ -10,8 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,9 +27,8 @@ import com.vangelnum.newsapp.data.News
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun MainScreen(photos: News,viewModel: MainViewModel) {
+fun MainScreen(photos: News, viewModel: MainViewModel, news: List<RoomEntity>) {
     val context = LocalContext.current
-
     LazyColumn(modifier = Modifier.background(Color.Black)) {
         items(photos.articles) {
             Box(modifier = Modifier.clickable {
@@ -80,14 +78,40 @@ fun MainScreen(photos: News,viewModel: MainViewModel) {
 
                         Text(text = result2, fontSize = 16.sp)
                         Spacer(modifier = Modifier.weight(1f))
+
+                        var tint by remember {
+                            mutableStateOf(Color.White)
+                        }
+                        Log.d("tag",it.urlToImage)
+
+                        news.forEach { new ->
+                            if (it.urlToImage != null) {
+                                if (it.urlToImage.contains(new.urlPhoto)) {
+                                    tint = Color.Red
+                                }
+                            } else {
+                                tint = Color.White
+                            }
+                        }
                         CompositionLocalProvider(
                             LocalMinimumTouchTargetEnforcement provides false,
                         ) {
                             IconButton(onClick = {
-                                viewModel.addNewsDataBase(RoomEntity(it.urlToImage,it.description,result2))
+                                if (tint == Color.White) {
+                                    viewModel.addNewsDataBase(RoomEntity(it.urlToImage,
+                                        it.description,
+                                        result2))
+                                    tint = Color.Red
+                                } else {
+                                    viewModel.deleteNewsDataBase(RoomEntity(it.urlToImage,
+                                        it.description,
+                                        result2))
+                                    tint = Color.White
+                                }
                             }) {
-                                Icon(painter = painterResource(id = R.drawable.ic_round_favorite_border_24),
-                                    contentDescription = "favourite")
+                                Icon(painter = painterResource(id = R.drawable.ic_baseline_favorite_24),
+                                    contentDescription = "favourite", tint = tint)
+
                             }
                         }
                         Spacer(modifier = Modifier.width(20.dp))

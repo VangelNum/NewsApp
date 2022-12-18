@@ -33,7 +33,7 @@ fun NewsAppTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composabl
     val colors = if (darkTheme) {
         DarkColorPalette
     } else {
-        LightColorPalette
+        DarkColorPalette
     }
 
     MaterialTheme(

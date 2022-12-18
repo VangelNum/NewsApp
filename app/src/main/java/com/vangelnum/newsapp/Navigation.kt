@@ -1,12 +1,12 @@
 package com.vangelnum.newsapp
 
-import android.util.Log
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -21,21 +21,24 @@ import androidx.navigation.compose.rememberNavController
 fun Navigation(viewModel: MainViewModel) {
     val navController = rememberNavController()
     val photos by viewModel.items.collectAsState()
+    val news = viewModel.readAllData.observeAsState(listOf()).value
     val items = listOf(
         Screens.MainScreen,
         Screens.FavouriteScreen,
         Screens.SearchScreen
     )
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
     Scaffold(
         topBar = {
-            TopAppBar {
+            if (navBackStackEntry?.destination?.route != "search_screen") {
+                TopAppBar {
 
+                }
             }
         },
         bottomBar = {
             BottomNavigation {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
                 items.forEach { screen ->
                     BottomNavigationItem(selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
@@ -69,13 +72,13 @@ fun Navigation(viewModel: MainViewModel) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route = Screens.MainScreen.route) {
-                MainScreen(photos = photos, viewModel = viewModel)
+                MainScreen(photos = photos, viewModel = viewModel, news = news)
             }
             composable(route = Screens.FavouriteScreen.route) {
-                FavouriteScreen(viewModel = viewModel)
+                FavouriteScreen(viewModel = viewModel, news = news)
             }
             composable(route = Screens.SearchScreen.route) {
-                SearchScreen()
+                SearchScreen(viewModel = viewModel, news = news)
             }
         }
     }

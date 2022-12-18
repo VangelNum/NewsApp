@@ -9,4 +9,8 @@ class MyRepositoryImpl(
     override suspend fun getNews(): Response<News> {
         return api.getNews()
     }
+
+    override suspend fun getSearchNews(query: String): Response<News> {
+        return api.getSearchNews(query)
+    }
 }

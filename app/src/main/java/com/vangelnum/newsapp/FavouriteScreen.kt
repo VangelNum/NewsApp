@@ -28,9 +28,8 @@ import coil.compose.SubcomposeAsyncImage
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun FavouriteScreen(viewModel: MainViewModel) {
+fun FavouriteScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
     val context = LocalContext.current
-    val news = viewModel.readAllData.observeAsState(listOf()).value
 
     LazyColumn(modifier = Modifier.background(Color.Black)) {
         items(news) {
