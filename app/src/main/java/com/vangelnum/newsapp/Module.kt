@@ -1,5 +1,6 @@
 package com.vangelnum.newsapp
 
+import com.vangelnum.newsapp.Constants.BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,7 +17,7 @@ object Module {
     @Provides
     fun provideMyApi(): MyApi {
         return Retrofit.Builder()
-            .baseUrl("https://newsapi.org/")
+            .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(MyApi::class.java)

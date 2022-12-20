@@ -1,5 +1,6 @@
 package com.vangelnum.newsapp
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,6 +33,7 @@ class MainViewModel @Inject constructor(
     fun getSearchNews(query: String) {
         viewModelScope.launch (Dispatchers.IO) {
             val response = repository.getSearchNews(query)
+            Log.d("check",response.toString())
             if (response.isSuccessful) {
                 _itemsSearch.value = response.body()!!
             }

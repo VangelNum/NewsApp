@@ -3,11 +3,14 @@ package com.vangelnum.newsapp
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -23,13 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import com.vangelnum.newsapp.data.News
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(photos: News, viewModel: MainViewModel, news: List<RoomEntity>) {
     val context = LocalContext.current
-    LazyColumn(modifier = Modifier.background(Color.Black)) {
+    val listState = rememberLazyListState()
+    LazyColumn(state = listState) {
         items(photos.articles) {
             Box(modifier = Modifier.clickable {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it.url))
@@ -82,7 +87,6 @@ fun MainScreen(photos: News, viewModel: MainViewModel, news: List<RoomEntity>) {
                         var tint by remember {
                             mutableStateOf(Color.White)
                         }
-                        Log.d("tag",it.urlToImage)
 
                         news.forEach { new ->
                             if (it.urlToImage != null) {
@@ -142,7 +146,26 @@ fun MainScreen(photos: News, viewModel: MainViewModel, news: List<RoomEntity>) {
 
         }
     }
+    val scope = rememberCoroutineScope()
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .padding(bottom = 10.dp, end = 10.dp), contentAlignment = Alignment.BottomEnd) {
+        val isAtTop by remember {
+            derivedStateOf {
+                listState.firstVisibleItemIndex == 0
+            }
+        }
+        AnimatedVisibility(visible = !isAtTop) {
+            FloatingActionButton(onClick = {
 
+                if (!isAtTop) {
+                    scope.launch { listState.animateScrollToItem(0) }
+                }
+            }) {
+                Icon(painter = painterResource(id = R.drawable.ic_baseline_keyboard_arrow_up_24), contentDescription = "arrow")
+            }
+        }
+    }
     if (photos.totalResults == 0) {
         Log.d("check", photos.totalResults.toString())
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

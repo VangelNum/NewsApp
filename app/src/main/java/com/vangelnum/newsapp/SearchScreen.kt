@@ -1,8 +1,11 @@
 package com.vangelnum.newsapp
 
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.widget.DatePicker
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +14,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,12 +29,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
-import com.vangelnum.newsapp.data.News
+import java.util.*
 
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
@@ -88,33 +95,38 @@ fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
 
                             Text(text = result2, fontSize = 16.sp)
                             Spacer(modifier = Modifier.weight(1f))
+                            var tint by remember {
+                                mutableStateOf(Color.White)
+                            }
+
+                            news.forEach { new ->
+                                if (it.urlToImage != null) {
+                                    if (it.urlToImage.contains(new.urlPhoto)) {
+                                        tint = Color.Red
+                                    }
+                                } else {
+                                    tint = Color.White
+                                }
+                            }
                             CompositionLocalProvider(
                                 LocalMinimumTouchTargetEnforcement provides false,
                             ) {
-                                val state by remember {
-                                    mutableStateOf(false)
-                                }
                                 IconButton(onClick = {
-                                    viewModel.addNewsDataBase(RoomEntity(it.urlToImage,
-                                        it.description,
-                                        result2))
-                                }) {
-                                    news.forEach { new ->
-                                        if (it.urlToImage != null) {
-                                            if (new.urlPhoto.contains(it.urlToImage)) {
-                                                Icon(painter = painterResource(
-                                                    id = R.drawable.ic_round_favorite_border_24),
-                                                    contentDescription = "favourite",
-                                                    tint = Color.Red)
-                                            } else {
-                                                Icon(painter = painterResource(
-                                                    id = R.drawable.ic_baseline_favorite_24),
-                                                    contentDescription = "favourite",
-                                                    tint = Color.White
-                                                )
-                                            }
-                                        }
+                                    if (tint == Color.White) {
+                                        viewModel.addNewsDataBase(RoomEntity(it.urlToImage,
+                                            it.description,
+                                            result2))
+                                        tint = Color.Red
+                                    } else {
+                                        viewModel.deleteNewsDataBase(RoomEntity(it.urlToImage,
+                                            it.description,
+                                            result2))
+                                        tint = Color.White
                                     }
+                                }) {
+                                    Icon(painter = painterResource(id = R.drawable.ic_baseline_favorite_24),
+                                        contentDescription = "favourite", tint = tint)
+
                                 }
                             }
                             Spacer(modifier = Modifier.width(20.dp))
@@ -130,7 +142,7 @@ fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
                                     val shareIntent = Intent.createChooser(sendIntent, null)
                                     context.startActivity(shareIntent)
                                 }) {
-                                    androidx.compose.material.Icon(painter = painterResource(id = R.drawable.ic_baseline_share_24),
+                                    Icon(painter = painterResource(id = R.drawable.ic_baseline_share_24),
                                         contentDescription = "share")
                                 }
                             }
@@ -155,16 +167,19 @@ fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun  SearchTab(
-    viewModel: MainViewModel
+fun SearchTab(
+    viewModel: MainViewModel,
 ) {
     var value by remember {
         mutableStateOf("")
     }
     var query by remember {
         mutableStateOf("")
+    }
+    var visible by remember {
+        mutableStateOf(false)
     }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
@@ -173,17 +188,15 @@ fun  SearchTab(
         focusRequester.requestFocus()
         keyboardController?.show()
     }
-
     OutlinedTextField(
         value = value,
         onValueChange = {
             value = it
         },
-
         modifier = Modifier
             .focusRequester(focusRequester = focusRequester)
             .fillMaxWidth()
-            .padding(5.dp),
+            .padding(all = 10.dp),
         leadingIcon = {
             Icon(
                 painter = painterResource(id = R.drawable.ic_baseline_search_24),
@@ -192,10 +205,12 @@ fun  SearchTab(
             )
         },
         trailingIcon = {
-            IconButton(onClick = { value = "" }) {
+            IconButton(onClick = {
+                visible = !visible
+            }) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_outline_close_24),
-                    contentDescription = "delete",
+                    painter = painterResource(id = R.drawable.ic_baseline_sort_24),
+                    contentDescription = "sort",
                     tint = Color.White
                 )
             }
@@ -212,7 +227,7 @@ fun  SearchTab(
         ),
         shape = RoundedCornerShape(15.dp),
         placeholder = {
-            Text(text = "Search")
+            Text(text = "Search Something")
         },
         keyboardActions = KeyboardActions(
             onDone = {
@@ -224,5 +239,94 @@ fun  SearchTab(
             }
         )
     )
+    AnimatedVisibility(visible = visible) {
+        DataPicker()
+    }
+
 
 }
+
+@Composable
+fun DataPicker() {
+    val mContext = LocalContext.current
+
+    val mYear: Int
+    val mMonth: Int
+    val mDay: Int
+    val mCalendar = Calendar.getInstance()
+    mYear = mCalendar.get(Calendar.YEAR)
+    mMonth = mCalendar.get(Calendar.MONTH)
+    mDay = mCalendar.get(Calendar.DAY_OF_MONTH)
+    mCalendar.time = Date()
+    val mDate = remember { mutableStateOf("") }
+    val mDatePickerDialog = DatePickerDialog(
+        mContext,
+        { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
+            mDate.value = "$mDayOfMonth/${mMonth + 1}/$mYear"
+        }, mYear, mMonth, mDay
+    )
+
+    Column(modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Button(onClick = {
+            mDatePickerDialog.show()
+        }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0XFF0F9D58))) {
+            Text(text = "Open Date Picker", color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.size(100.dp))
+        // Text(text = "Selected Date: ${mDate.value}", fontSize = 30.sp, textAlign = TextAlign.Center)
+    }
+
+    var value by remember {
+        mutableStateOf("")
+    }
+
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .padding(10.dp)) {
+        OutlinedTextField(
+            value = mYear.toString(),
+            onValueChange = {
+                value = it
+            },
+            modifier = Modifier.weight(1f),
+            label = { Text("From") },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_calendar_month_24),
+                    contentDescription = "",
+                    tint = MaterialTheme.colors.onSurface
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_touch_app_24),
+                    contentDescription = "",
+                    tint = MaterialTheme.colors.onSurface
+                )
+            },
+            readOnly = true
+        )
+        OutlinedTextField(
+            value = mYear.toString(),
+            onValueChange = {
+                value = it
+            },
+            modifier = Modifier.weight(1f),
+            label = { Text("To") },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_calendar_month_24),
+                    contentDescription = "",
+                    tint = MaterialTheme.colors.onSurface
+                )
+            },
+            readOnly = true
+        )
+    }
+
+}
+

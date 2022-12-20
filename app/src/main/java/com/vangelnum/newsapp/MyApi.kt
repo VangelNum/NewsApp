@@ -4,12 +4,13 @@ import com.vangelnum.newsapp.data.News
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
+import com.vangelnum.newsapp.Constants.API_KEY
 
 interface MyApi {
-    @GET("/v2/top-headlines?country=ru&apiKey=7badb69b2e6c49309030ed889856c24b")
+    @GET("/v2/top-headlines?country=ru&apiKey=$API_KEY")
     suspend fun getNews(): Response<News>
 
-    @GET("v2/everything/?country-ru&apiKey=7badb69b2e6c49309030ed889856c24b")
+    @GET("v2/everything?apiKey=$API_KEY")
     suspend fun getSearchNews(
         @Query("q") query: String
     ): Response<News>

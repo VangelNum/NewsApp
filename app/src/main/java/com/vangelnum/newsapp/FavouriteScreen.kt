@@ -84,8 +84,8 @@ fun FavouriteScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
                             IconButton(onClick = {
                                 viewModel.deleteNewsDataBase(RoomEntity(it.urlPhoto,it.content,it.time))
                             }) {
-                                Icon(painter = painterResource(id = R.drawable.ic_round_favorite_border_24),
-                                    contentDescription = "favourite")
+                                Icon(painter = painterResource(id = R.drawable.ic_baseline_favorite_24),
+                                    contentDescription = "favourite",tint = Color.Red)
                             }
                         }
                         Spacer(modifier = Modifier.width(20.dp))
