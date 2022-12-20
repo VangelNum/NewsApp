@@ -14,4 +14,5 @@ interface MyApi {
     suspend fun getSearchNews(
         @Query("q") query: String
     ): Response<News>
+
 }

@@ -6,6 +6,8 @@ import android.net.Uri
 import android.util.Log
 import android.widget.DatePicker
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,9 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +28,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -160,7 +158,6 @@ fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
     }
 
     if (newsFromSearch.totalResults == 0) {
-        Log.d("check", newsFromSearch.totalResults.toString())
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(text = "Nothing found")
         }
@@ -239,7 +236,9 @@ fun SearchTab(
             }
         )
     )
-    AnimatedVisibility(visible = visible) {
+    AnimatedVisibility(visible = visible,
+        enter = slideInVertically(),
+        exit = slideOutVertically()) {
         DataPicker()
     }
 
@@ -259,41 +258,36 @@ fun DataPicker() {
     mDay = mCalendar.get(Calendar.DAY_OF_MONTH)
     mCalendar.time = Date()
     val mDate = remember { mutableStateOf("") }
-    val mDatePickerDialog = DatePickerDialog(
-        mContext,
-        { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-            mDate.value = "$mDayOfMonth/${mMonth + 1}/$mYear"
+    val mDate2 = remember { mutableStateOf("") }
+    val mDatePickerDialog =
+        DatePickerDialog(mContext, { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
+            mDate.value = "$mYear-${mMonth + 1}-$mDayOfMonth"
         }, mYear, mMonth, mDay
-    )
+        )
 
-    Column(modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally) {
+    val mDatePickerDialog2 =
+        DatePickerDialog(mContext, { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
+            mDate2.value = "$mYear-${mMonth + 1}-$mDayOfMonth"
+        }, mYear, mMonth, mDay
+        )
 
-        Button(onClick = {
-            mDatePickerDialog.show()
-        }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0XFF0F9D58))) {
-            Text(text = "Open Date Picker", color = Color.White)
-        }
-
-        Spacer(modifier = Modifier.size(100.dp))
-        // Text(text = "Selected Date: ${mDate.value}", fontSize = 30.sp, textAlign = TextAlign.Center)
-    }
-
-    var value by remember {
-        mutableStateOf("")
-    }
 
     Row(modifier = Modifier
         .fillMaxWidth()
-        .padding(10.dp)) {
+        .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
-            value = mYear.toString(),
+            value = mDate.value,
             onValueChange = {
-                value = it
+
             },
-            modifier = Modifier.weight(1f),
-            label = { Text("From") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .clickable {
+                    mDatePickerDialog.show()
+                },
+            label = { Text("From")},
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_baseline_calendar_month_24),
@@ -301,22 +295,25 @@ fun DataPicker() {
                     tint = MaterialTheme.colors.onSurface
                 )
             },
-            trailingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_touch_app_24),
-                    contentDescription = "",
-                    tint = MaterialTheme.colors.onSurface
-                )
-            },
-            readOnly = true
+            readOnly = true,
+            enabled = false,
+            maxLines = 1,
+            colors = TextFieldDefaults.textFieldColors(
+                disabledTextColor = Color.White
+            )
         )
         OutlinedTextField(
-            value = mYear.toString(),
+            value = mDate2.value,
             onValueChange = {
-                value = it
+
             },
-            modifier = Modifier.weight(1f),
-            label = { Text("To") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .clickable {
+                    mDatePickerDialog2.show()
+                },
+            label = { Text("To")},
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_baseline_calendar_month_24),
@@ -324,9 +321,13 @@ fun DataPicker() {
                     tint = MaterialTheme.colors.onSurface
                 )
             },
-            readOnly = true
+            readOnly = true,
+            enabled = false,
+            maxLines = 1,
+            colors = TextFieldDefaults.textFieldColors(
+                disabledTextColor = Color.White
+            )
         )
     }
-
 }
 
