@@ -8,16 +8,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+
 
 @Composable
 fun Navigation(viewModel: MainViewModel) {
@@ -33,11 +35,12 @@ fun Navigation(viewModel: MainViewModel) {
     )
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val scaffoldState = rememberScaffoldState()
     Scaffold(
+        scaffoldState = scaffoldState,
         topBar = {
             if (navBackStackEntry?.destination?.route != "search_screen") {
-                TopAppBar(
-                ) {
+                TopAppBar {
 
                 }
             }
@@ -89,7 +92,27 @@ fun Navigation(viewModel: MainViewModel) {
                 FavouriteScreen(viewModel = viewModel, news = news)
             }
             composable(route = Screens.SearchScreen.route) {
-                SearchScreen(viewModel = viewModel, news = news)
+                SearchScreen(viewModel = viewModel,
+                    news = news,
+                    scaffoldState = scaffoldState,
+                    navController = navController)
+            }
+            composable(route = Screens.FilterScreen.route + "/{query}/{sortBy}", arguments =
+            listOf(
+                navArgument("query") {
+                    type = NavType.StringType
+                },
+                navArgument("sortBy") {
+                    type = NavType.StringType
+                }
+            )
+            ) { entry ->
+                FilterScreen(
+                    viewModel = viewModel,
+                    query = entry.arguments?.getString("query"),
+                    sortBy = entry.arguments?.getString("sortBy"),
+                    navController = navController
+                )
             }
         }
     }

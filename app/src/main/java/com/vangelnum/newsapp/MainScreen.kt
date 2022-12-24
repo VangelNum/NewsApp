@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -162,7 +161,8 @@ fun MainScreen(photos: News, viewModel: MainViewModel, news: List<RoomEntity>) {
                     scope.launch { listState.animateScrollToItem(0) }
                 }
             }) {
-                Icon(painter = painterResource(id = R.drawable.ic_baseline_keyboard_arrow_up_24), contentDescription = "arrow")
+                Icon(painter = painterResource(id = R.drawable.ic_baseline_keyboard_arrow_up_24),
+                    contentDescription = "arrow")
             }
         }
     }

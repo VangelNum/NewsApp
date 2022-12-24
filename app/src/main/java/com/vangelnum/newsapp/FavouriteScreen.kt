@@ -2,7 +2,6 @@ package com.vangelnum.newsapp
 
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,10 +9,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material3.Card
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,7 +35,7 @@ fun FavouriteScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
                 context.startActivity(browserIntent)
             }) {
                 Column {
-                    androidx.compose.material.Card(shape = RoundedCornerShape(15.dp),
+                    Card(shape = RoundedCornerShape(15.dp),
                         modifier = Modifier
                             .height(250.dp)
                             .padding(all = 10.dp)
@@ -82,10 +79,12 @@ fun FavouriteScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
                             LocalMinimumTouchTargetEnforcement provides false,
                         ) {
                             IconButton(onClick = {
-                                viewModel.deleteNewsDataBase(RoomEntity(it.urlPhoto,it.content,it.time))
+                                viewModel.deleteNewsDataBase(RoomEntity(it.urlPhoto,
+                                    it.content,
+                                    it.time))
                             }) {
-                                Icon(painter = painterResource(id = R.drawable.ic_baseline_favorite_24),
-                                    contentDescription = "favourite",tint = Color.Red)
+                                Icon(painter = painterResource(id = R.drawable.ic_baseline_delete_24),
+                                    contentDescription = "favourite", tint = Color.White)
                             }
                         }
                         Spacer(modifier = Modifier.width(20.dp))

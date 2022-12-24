@@ -1,13 +1,7 @@
 package com.vangelnum.newsapp
 
-import android.app.DatePickerDialog
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
-import android.widget.DatePicker
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
@@ -24,25 +19,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
-import java.util.*
+import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
+fun SearchScreen(
+    viewModel: MainViewModel,
+    news: List<RoomEntity>,
+    scaffoldState: ScaffoldState,
+    navController: NavController,
+) {
     val newsFromSearch by viewModel.itemsSearch.collectAsState()
     val context = LocalContext.current
     Column {
-        SearchTab(viewModel = viewModel)
+        SearchTab(viewModel = viewModel,
+            scaffoldState = scaffoldState,
+            navController = navController)
         LazyColumn(modifier = Modifier.background(Color.Black)) {
 
             items(newsFromSearch.articles) {
@@ -110,16 +115,16 @@ fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
                                 LocalMinimumTouchTargetEnforcement provides false,
                             ) {
                                 IconButton(onClick = {
-                                    if (tint == Color.White) {
+                                    tint = if (tint == Color.White) {
                                         viewModel.addNewsDataBase(RoomEntity(it.urlToImage,
                                             it.description,
                                             result2))
-                                        tint = Color.Red
+                                        Color.Red
                                     } else {
                                         viewModel.deleteNewsDataBase(RoomEntity(it.urlToImage,
                                             it.description,
                                             result2))
-                                        tint = Color.White
+                                        Color.White
                                     }
                                 }) {
                                     Icon(painter = painterResource(id = R.drawable.ic_baseline_favorite_24),
@@ -141,7 +146,9 @@ fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
                                     context.startActivity(shareIntent)
                                 }) {
                                     Icon(painter = painterResource(id = R.drawable.ic_baseline_share_24),
-                                        contentDescription = "share")
+                                        contentDescription = "share",
+                                        tint = Color.White
+                                    )
                                 }
                             }
                         }
@@ -149,10 +156,7 @@ fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
                             .height(1.dp)
                             .fillMaxWidth(), color = Color.Gray)
                     }
-
                 }
-
-
             }
         }
     }
@@ -168,27 +172,30 @@ fun SearchScreen(viewModel: MainViewModel, news: List<RoomEntity>) {
 @Composable
 fun SearchTab(
     viewModel: MainViewModel,
+    scaffoldState: ScaffoldState,
+    navController: NavController,
 ) {
-    var value by remember {
-        mutableStateOf("")
-    }
-    var query by remember {
-        mutableStateOf("")
-    }
-    var visible by remember {
-        mutableStateOf(false)
-    }
+
+
+    val query = viewModel.stateFlow.collectAsState()
+
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
+
+    val listItems = listOf("publishedAt", "popularity", "relevancy")
+
+    var selectedItem by remember {
+        mutableStateOf(listItems[0])
+    }
 
     LaunchedEffect(key1 = Unit) {
         focusRequester.requestFocus()
         keyboardController?.show()
     }
     OutlinedTextField(
-        value = value,
+        value = query.value,
         onValueChange = {
-            value = it
+            viewModel.triggerStateFlow(it)
         },
         modifier = Modifier
             .focusRequester(focusRequester = focusRequester)
@@ -203,11 +210,11 @@ fun SearchTab(
         },
         trailingIcon = {
             IconButton(onClick = {
-                visible = !visible
+                viewModel.triggerStateFlow("")
             }) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_sort_24),
-                    contentDescription = "sort",
+                    painter = painterResource(id = R.drawable.ic_outline_close_24),
+                    contentDescription = "close",
                     tint = Color.White
                 )
             }
@@ -223,111 +230,107 @@ fun SearchTab(
             disabledIndicatorColor = Color.Black,
         ),
         shape = RoundedCornerShape(15.dp),
+
         placeholder = {
             Text(text = "Search Something")
         },
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(
-            onDone = {
-                if (value != "") {
-                    query = value
-                    viewModel.getSearchNews(query)
+            onSearch = {
+                if (query.value != "") {
+                    viewModel.getSearchNews(query.value, selectedItem, null, null)
                     keyboardController?.hide()
                 }
             }
         )
     )
-    AnimatedVisibility(visible = visible,
-        enter = slideInVertically(),
-        exit = slideOutVertically()) {
-        DataPicker()
-    }
 
+    if (query.value != "") {
+        var expanded by remember {
+            mutableStateOf(false)
+        }
 
-}
+        val scope = rememberCoroutineScope()
 
-@Composable
-fun DataPicker() {
-    val mContext = LocalContext.current
-
-    val mYear: Int
-    val mMonth: Int
-    val mDay: Int
-    val mCalendar = Calendar.getInstance()
-    mYear = mCalendar.get(Calendar.YEAR)
-    mMonth = mCalendar.get(Calendar.MONTH)
-    mDay = mCalendar.get(Calendar.DAY_OF_MONTH)
-    mCalendar.time = Date()
-    val mDate = remember { mutableStateOf("") }
-    val mDate2 = remember { mutableStateOf("") }
-    val mDatePickerDialog =
-        DatePickerDialog(mContext, { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-            mDate.value = "$mYear-${mMonth + 1}-$mDayOfMonth"
-        }, mYear, mMonth, mDay
-        )
-
-    val mDatePickerDialog2 =
-        DatePickerDialog(mContext, { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-            mDate2.value = "$mYear-${mMonth + 1}-$mDayOfMonth"
-        }, mYear, mMonth, mDay
-        )
-
-
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = mDate.value,
-            onValueChange = {
-
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .clickable {
-                    mDatePickerDialog.show()
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp, end = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = {
+                    expanded = !expanded
                 },
-            label = { Text("From")},
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_calendar_month_24),
-                    contentDescription = "",
-                    tint = MaterialTheme.colors.onSurface
-                )
-            },
-            readOnly = true,
-            enabled = false,
-            maxLines = 1,
-            colors = TextFieldDefaults.textFieldColors(
-                disabledTextColor = Color.White
-            )
-        )
-        OutlinedTextField(
-            value = mDate2.value,
-            onValueChange = {
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                OutlinedTextField(
+                    value = selectedItem,
+                    onValueChange = {
 
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .clickable {
-                    mDatePickerDialog2.show()
-                },
-            label = { Text("To")},
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_calendar_month_24),
-                    contentDescription = "",
-                    tint = MaterialTheme.colors.onSurface
+                    },
+                    readOnly = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = expanded
+                        )
+                    },
+                    modifier = Modifier.height(60.dp),
+                    singleLine = true,
+                    colors = TextFieldDefaults.textFieldColors(
+                        focusedIndicatorColor = MaterialTheme.colors.onSurface.copy(alpha = 0.12f)
+                            .compositeOver(MaterialTheme.colors.surface),
+                        backgroundColor = Color.Transparent,
+                        unfocusedIndicatorColor = MaterialTheme.colors.onSurface.copy(alpha = 0.12f)
+                            .compositeOver(MaterialTheme.colors.surface)
+                    )
                 )
-            },
-            readOnly = true,
-            enabled = false,
-            maxLines = 1,
-            colors = TextFieldDefaults.textFieldColors(
-                disabledTextColor = Color.White
-            )
-        )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    listItems.forEach { currentItem ->
+                        DropdownMenuItem(onClick = {
+                            selectedItem = currentItem
+                            expanded = false
+                            if (query.value != "") {
+                                viewModel.getSearchNews(query = query.value,
+                                    sortBy = currentItem,
+                                    null,
+                                    null)
+                            } else {
+                                scope.launch {
+                                    scaffoldState.snackbarHostState.showSnackbar(
+                                        message = "Need some query"
+                                    )
+                                }
+                            }
+                        }) {
+                            Text(text = currentItem)
+                        }
+                    }
+                }
+            }
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)) {
+                OutlinedButton(onClick = {
+                    navController.navigate(Screens.FilterScreen.route + "/${query.value}/$selectedItem")
+                }, modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_baseline_filter_list_24),
+                        contentDescription = "sort",
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(text = "Filters", color = Color.White)
+                }
+            }
+        }
     }
 }
-

@@ -9,6 +9,7 @@ class RoomRepositoryImpl @Inject constructor(
     override fun getAll(): LiveData<List<RoomEntity>> {
         return myDao.getAll()
     }
+
     override suspend fun addNews(news: RoomEntity) {
         return myDao.addNews(news)
     }

@@ -10,7 +10,12 @@ class MyRepositoryImpl(
         return api.getNews()
     }
 
-    override suspend fun getSearchNews(query: String): Response<News> {
-        return api.getSearchNews(query)
+    override suspend fun getSearchNews(
+        query: String,
+        sortBy: String,
+        from: String?,
+        to: String?,
+    ): Response<News> {
+        return api.getSearchNews(query, sortBy, from, to)
     }
 }
