@@ -7,23 +7,43 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Text
+import androidx.compose.material.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import java.util.*
+import com.vangelnum.newsapp.core.presentation.Screens
+import com.vangelnum.newsapp.feature_search.presentation.SearchViewModel
+import java.util.Calendar
+import java.util.Date
 
 
 @Composable
 fun FilterScreen(
-    viewModel: MainViewModel,
+    viewModel: SearchViewModel = hiltViewModel(),
     query: String?,
     sortBy: String?,
     navController: NavController,
@@ -42,15 +62,17 @@ fun FilterScreen(
     val mDate2 = remember { mutableStateOf("") }
 
     val mDatePickerDialog =
-        DatePickerDialog(mContext, { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-            mDate.value = "$mYear-${mMonth + 1}-$mDayOfMonth"
-        }, mYear, mMonth, mDay
+        DatePickerDialog(
+            mContext, { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
+                mDate.value = "$mYear-${mMonth + 1}-$mDayOfMonth"
+            }, mYear, mMonth, mDay
         )
 
     val mDatePickerDialog2 =
-        DatePickerDialog(mContext, { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-            mDate2.value = "$mYear-${mMonth + 1}-$mDayOfMonth"
-        }, mYear, mMonth, mDay
+        DatePickerDialog(
+            mContext, { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
+                mDate2.value = "$mYear-${mMonth + 1}-$mDayOfMonth"
+            }, mYear, mMonth, mDay
         )
 
     var visible by remember {
@@ -66,20 +88,24 @@ fun FilterScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
-            OutlinedButton(onClick = {
-                viewModel.getSearchNews(query = query!!,
-                    sortBy = sortBy!!,
-                    mDate.value,
-                    mDate2.value)
-                navController.navigate(Screens.SearchScreen.route)
-            },
+            OutlinedButton(
+                onClick = {
+                    viewModel.getSearchNews(
+                        query = query!!,
+                        sortBy = sortBy!!,
+                        mDate.value,
+                        mDate2.value
+                    )
+                    navController.navigate(Screens.SearchScreen.route)
+                },
                 colors = ButtonDefaults.buttonColors(
                     contentColor = Color.White,
                     backgroundColor = Color.Black
                 ), border = BorderStroke(1.dp, Color.DarkGray),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp)) {
+                    .height(60.dp)
+            ) {
                 Text(text = "Применить")
             }
         }
@@ -88,11 +114,13 @@ fun FilterScreen(
     Row {
 
     }
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically) {
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         OutlinedTextField(
             value = mDate.value,
             onValueChange = {
