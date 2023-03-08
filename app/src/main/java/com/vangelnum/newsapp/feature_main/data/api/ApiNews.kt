@@ -1,21 +1,10 @@
 package com.vangelnum.newsapp.feature_main.data.api
 
-import com.vangelnum.newsapp.core.utils.Constants.API_KEY
 import com.vangelnum.newsapp.core.data.dto.NewsDto
-import retrofit2.Response
+import com.vangelnum.newsapp.core.utils.Constants.API_KEY
 import retrofit2.http.GET
-import retrofit2.http.Query
 
 interface ApiNews {
     @GET("/v2/top-headlines?country=us&apiKey=$API_KEY")
     suspend fun getNews(): NewsDto
-
-    @GET("v2/everything?apiKey=$API_KEY")
-    suspend fun getSearchNews(
-        @Query("q") query: String,
-        @Query("sortBy") sortBy: String,
-        @Query("from") from: String?,
-        @Query("to") to: String?,
-    ): NewsDto
-
 }

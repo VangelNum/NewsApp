@@ -1,7 +1,8 @@
 package com.vangelnum.newsapp.feature_search.domain.repository
 
-import com.vangelnum.newsapp.core.data.dto.NewsDto
-import retrofit2.Response
+import com.vangelnum.newsapp.core.common.Resource
+import com.vangelnum.newsapp.core.data.model.News
+import kotlinx.coroutines.flow.Flow
 
 interface SearchRepository {
     suspend fun getSearchNews(
@@ -9,5 +10,5 @@ interface SearchRepository {
         sortBy: String,
         from: String?,
         to: String?,
-    ): Response<NewsDto>
+    ): Flow<Resource<News>>
 }
