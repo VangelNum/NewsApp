@@ -1,4 +1,10 @@
-package com.vangelnum.newsapp.core.data.dto
+package com.vangelnum.newsapp.core.data.model
+
+data class News(
+    val articles: List<Article>,
+    val status: String?,
+    var totalResults: Int
+)
 
 data class Article(
     val author: String,
@@ -9,4 +15,9 @@ data class Article(
     val title: String,
     val url: String,
     val urlToImage: String
+)
+
+data class Source(
+    val id: String,
+    val name: String
 )

@@ -1,6 +1,6 @@
 package com.vangelnum.newsapp.feature_search.data
 
-import com.vangelnum.newsapp.core.data.dto.News
+import com.vangelnum.newsapp.core.data.dto.NewsDto
 import com.vangelnum.newsapp.feature_main.data.api.ApiNews
 import com.vangelnum.newsapp.feature_search.domain.repository.SearchRepository
 import retrofit2.Response
@@ -14,7 +14,7 @@ class SearchRepositoryImpl @Inject constructor(
         sortBy: String,
         from: String?,
         to: String?
-    ): Response<News> {
+    ): Response<NewsDto> {
         return api.getSearchNews(query, sortBy, from, to)
     }
 }

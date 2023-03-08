@@ -1,6 +1,6 @@
 package com.vangelnum.newsapp.core.data.dto
 
-data class Source(
+data class SourceDto(
     val id: String,
     val name: String
 )

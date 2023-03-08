@@ -1,7 +1,7 @@
 package com.vangelnum.newsapp.core.data.dto
 
-data class News(
-    val articles: List<Article>,
+data class NewsDto(
+    val articles: List<ArticleDto>,
     val status: String?,
     var totalResults: Int
 )

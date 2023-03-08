@@ -2,7 +2,6 @@ package com.vangelnum.newsapp.feature_main.presentation
 
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,7 +42,7 @@ fun MainScreen(
     val context = LocalContext.current
     val listState = rememberLazyListState()
     LazyColumn(state = listState) {
-        items(photos.articles) {
+        items(photos.data?.articles!!) {
             Box(modifier = Modifier.clickable {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it.url))
                 context.startActivity(browserIntent)
@@ -196,8 +195,7 @@ fun MainScreen(
             }
         }
     }
-    if (photos.totalResults == 0) {
-        Log.d("check", photos.totalResults.toString())
+    if (photos.data?.totalResults == 0) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = Color.Green)
         }

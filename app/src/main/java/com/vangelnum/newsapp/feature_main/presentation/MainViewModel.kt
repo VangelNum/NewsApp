@@ -2,12 +2,12 @@ package com.vangelnum.newsapp.feature_main.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vangelnum.newsapp.core.data.dto.News
+import com.vangelnum.newsapp.core.common.Resource
+import com.vangelnum.newsapp.core.data.model.News
 import com.vangelnum.newsapp.feature_main.domain.repository.MainRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,14 +16,18 @@ class MainViewModel @Inject constructor(
     private val repository: MainRepository,
 ) : ViewModel() {
 
-    private val _items = MutableStateFlow(News(emptyList(), "", 0))
-    var items: StateFlow<News> = _items
+    private val _items = MutableStateFlow<Resource<News>>(Resource.Loading())
+    var items = _items.asStateFlow()
+
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            val response = repository.getNews()
-            if (response.isSuccessful) {
-                _items.value = response.body()!!
+        getNews()
+    }
+
+    fun getNews() {
+        viewModelScope.launch {
+            repository.getNews().collect {
+                _items.value = it
             }
         }
     }
