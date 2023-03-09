@@ -33,7 +33,6 @@ fun FavouriteScreen(viewModel: FavouriteViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val news = viewModel.readAllData.observeAsState()
 
-
     LazyColumn(modifier = Modifier.background(Color.Black)) {
         items(news.value ?: emptyList()) {
             Box(modifier = Modifier.clickable {

@@ -13,8 +13,6 @@ import javax.inject.Inject
 class FavouriteViewModel @Inject constructor(
     private val repository: FavouriteRepository
 ) : ViewModel() {
-
-
     var readAllData: LiveData<List<FavouriteData>> = repository.getAll()
 
     fun addNewsDataBase(news: FavouriteData) {

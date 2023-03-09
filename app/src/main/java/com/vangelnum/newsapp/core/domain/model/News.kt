@@ -1,4 +1,4 @@
-package com.vangelnum.newsapp.core.data.model
+package com.vangelnum.newsapp.core.domain.model
 
 data class News(
     val articles: List<Article>,

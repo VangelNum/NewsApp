@@ -3,7 +3,7 @@ package com.vangelnum.newsapp.feature_main.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vangelnum.newsapp.core.common.Resource
-import com.vangelnum.newsapp.core.data.model.News
+import com.vangelnum.newsapp.core.domain.model.News
 import com.vangelnum.newsapp.feature_main.domain.repository.MainRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

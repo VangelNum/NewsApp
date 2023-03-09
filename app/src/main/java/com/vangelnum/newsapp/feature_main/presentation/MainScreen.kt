@@ -1,205 +1,262 @@
 package com.vangelnum.newsapp.feature_main.presentation
 
+import android.content.Context
+import android.content.Context.VIBRATOR_MANAGER_SERVICE
+import android.content.Context.VIBRATOR_SERVICE
 import android.content.Intent
-import android.net.Uri
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Divider
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
-import com.vangelnum.newsapp.R
+import com.vangelnum.newsapp.core.common.Resource
+import com.vangelnum.newsapp.core.domain.model.Article
+import com.vangelnum.newsapp.core.domain.model.News
 import com.vangelnum.newsapp.feature_favourite.data.model.FavouriteData
 import com.vangelnum.newsapp.feature_favourite.presentation.FavouriteViewModel
 import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
-    viewModel: MainViewModel = hiltViewModel(),
-    viewModelRoom: FavouriteViewModel = hiltViewModel()
+    favouriteViewModel: FavouriteViewModel,
+    viewModelMain: MainViewModel = hiltViewModel()
 ) {
-    val photos = viewModel.items.collectAsState().value
-    val news = viewModelRoom.readAllData.observeAsState().value
-    val context = LocalContext.current
-    val listState = rememberLazyListState()
-    LazyColumn(state = listState) {
-        if (photos.data?.articles!=null) {
-            items(photos.data.articles) {
-                Box(modifier = Modifier.clickable {
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it.url))
-                    context.startActivity(browserIntent)
-                }) {
-                    Column {
-                        if (it.urlToImage != "null") {
-                            Card(
-                                shape = RoundedCornerShape(15.dp),
-                                modifier = Modifier
-                                    .height(250.dp)
-                                    .padding(all = 10.dp)
-                                    .fillMaxWidth()
-                            ) {
-                                SubcomposeAsyncImage(
-                                    model = it.urlToImage,
-                                    contentDescription = "image",
-                                    contentScale = ContentScale.FillBounds,
-                                    loading = {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .background(Color.Black),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            CircularProgressIndicator(color = Color.Green)
-                                        }
-                                    }
-                                )
+    val response = viewModelMain.items.collectAsState()
 
-                            }
-                        }
-                        Text(
-                            text = it.title,
-                            textAlign = TextAlign.Start,
-                            modifier = Modifier.padding(start = 15.dp, end = 15.dp),
-                            color = Color.White,
-                            maxLines = 3,
-                            fontSize = 20.sp,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(15.dp),
-                        ) {
-                            val result = it.publishedAt
-                            val result2 = result.substring(0, 10) + ' ' + result.substring(11, 16)
-
-                            Text(text = result2, fontSize = 16.sp)
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            var tint by remember {
-                                mutableStateOf(Color.White)
-                            }
-
-                            news?.forEach { new ->
-                                if (it.urlToImage != null) {
-                                    if (it.urlToImage.contains(new.urlPhoto)) {
-                                        tint = Color.Red
-                                    }
-                                } else {
-                                    tint = Color.White
-                                }
-                            }
-                            CompositionLocalProvider(
-                                LocalMinimumInteractiveComponentEnforcement provides false,
-                            ) {
-                                IconButton(onClick = {
-                                    if (tint == Color.White) {
-                                        viewModelRoom.addNewsDataBase(
-                                            FavouriteData(
-                                                it.urlToImage,
-                                                it.description,
-                                                result2
-                                            )
-                                        )
-                                        tint = Color.Red
-                                    } else {
-                                        viewModelRoom.deleteNewsDataBase(
-                                            FavouriteData(
-                                                it.urlToImage,
-                                                it.description,
-                                                result2
-                                            )
-                                        )
-                                        tint = Color.White
-                                    }
-                                }) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_baseline_favorite_24),
-                                        contentDescription = "favourite", tint = tint
-                                    )
-
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(20.dp))
-                            CompositionLocalProvider(
-                                LocalMinimumInteractiveComponentEnforcement provides false,
-                            ) {
-                                IconButton(onClick = {
-                                    val sendIntent: Intent = Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        putExtra(Intent.EXTRA_TEXT, it.url)
-                                        type = "text/plain"
-                                    }
-                                    val shareIntent = Intent.createChooser(sendIntent, null)
-                                    context.startActivity(shareIntent)
-                                }) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_baseline_share_24),
-                                        contentDescription = "share"
-                                    )
-                                }
-                            }
-                        }
-                        Divider(
-                            modifier = Modifier
-                                .height(1.dp)
-                                .fillMaxWidth(), color = Color.Gray
-                        )
-                    }
-
-                }
-
-
+    when (response.value) {
+        is Resource.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
+        }
+
+        is Resource.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = response.value.message.toString())
+            }
+        }
+
+        is Resource.Success -> {
+            MainContent(
+                items = response.value.data!!,
+                favouriteViewModel = favouriteViewModel
+            )
+        }
+
+    }
+}
+
+@Composable
+fun MainContent(items: News, favouriteViewModel: FavouriteViewModel) {
+    val lazyListState = rememberLazyListState()
+    val isVisible = remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 } }
+    LazyColumn(
+        state = lazyListState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        items(items.articles) { article ->
+            MainCard(article = article, favouriteViewModel = favouriteViewModel)
         }
     }
     val scope = rememberCoroutineScope()
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 10.dp, end = 10.dp), contentAlignment = Alignment.BottomEnd
-    ) {
-        val isAtTop by remember {
-            derivedStateOf {
-                listState.firstVisibleItemIndex == 0
-            }
-        }
-        AnimatedVisibility(visible = !isAtTop) {
-            FloatingActionButton(onClick = {
-
-                if (!isAtTop) {
-                    scope.launch { listState.animateScrollToItem(0) }
-                }
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+        AnimatedVisibility(visible = isVisible.value,
+            enter = slideInHorizontally {
+                it
+            }, exit = slideOutHorizontally {
+                it
             }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_baseline_keyboard_arrow_up_24),
-                    contentDescription = "arrow"
-                )
+            FloatingActionButton(
+                modifier = Modifier
+                    .padding(16.dp),
+                backgroundColor = MaterialTheme.colors.onSurface,
+                contentColor = Color.Black,
+                onClick = {
+                    scope.launch {
+                        lazyListState.animateScrollToItem(0)
+                    }
+                }) {
+                Icon(imageVector = Icons.Outlined.KeyboardArrowUp, contentDescription = "up")
             }
         }
     }
-    if (photos.data?.totalResults == 0) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color.Green)
+}
+
+@Composable
+fun MainCard(article: Article, favouriteViewModel: FavouriteViewModel) {
+    Card(
+        shape = MaterialTheme.shapes.large
+    ) {
+        if (article.urlToImage != "") {
+            SubcomposeAsyncImage(
+                model = article.urlToImage,
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                contentScale = ContentScale.Crop,
+                loading = {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            )
         }
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    MainTitle(article = article, favouriteViewModel = favouriteViewModel)
+}
+
+@Composable
+fun MainTitle(article: Article, favouriteViewModel: FavouriteViewModel) {
+    Text(
+        text = article.title,
+        maxLines = 3,
+        overflow = TextOverflow.Ellipsis,
+        style = MaterialTheme.typography.h3,
+    )
+    MainRowItems(article, favouriteViewModel)
+}
+
+
+@Composable
+fun MainRowItems(article: Article, favouriteViewModel: FavouriteViewModel) {
+    val context = LocalContext.current
+    val itemsFavourite = favouriteViewModel.readAllData.observeAsState()
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val publishedAt =
+            article.publishedAt.substring(0, 10) + ' ' + article.publishedAt.substring(11, 16)
+        Text(text = publishedAt)
+        Spacer(modifier = Modifier.weight(1f))
+        IconButton(onClick = {
+            vibrate(context)
+            if (itemsFavourite.value?.toString()?.contains(article.urlToImage) == false) {
+                addToDatabase(favouriteViewModel, article.urlToImage, article.content, publishedAt)
+            } else {
+                deleteFromDatabase(
+                    favouriteViewModel,
+                    article.urlToImage,
+                    article.content,
+                    publishedAt
+                )
+            }
+        }) {
+            Icon(
+                imageVector = Icons.Outlined.Favorite,
+                contentDescription = "favourite",
+                tint = if (itemsFavourite.value?.toString()
+                        ?.contains(article.urlToImage) == true
+                ) Color.Red else Color.White
+            )
+        }
+        IconButton(onClick = {
+            share(context, article.url)
+        }) {
+            Icon(imageVector = Icons.Outlined.Share, contentDescription = "share")
+        }
+    }
+    Divider(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.onSurface)
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+private fun addToDatabase(
+    favouriteViewModel: FavouriteViewModel,
+    urlToImage: String,
+    content: String,
+    publishedAt: String
+) {
+    favouriteViewModel.addNewsDataBase(
+        FavouriteData(
+            urlToImage,
+            content,
+            publishedAt
+        )
+    )
+}
+
+private fun deleteFromDatabase(
+    favouriteViewModel: FavouriteViewModel,
+    urlToImage: String,
+    content: String,
+    publishedAt: String
+) {
+    favouriteViewModel.deleteNewsDataBase(
+        FavouriteData(
+            urlToImage,
+            content,
+            publishedAt
+        )
+    )
+}
+
+private fun share(context: Context, url: String) {
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, url)
+        type = "text/plain"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, null)
+    context.startActivity(shareIntent)
+}
+
+@Suppress("DEPRECATION")
+private fun vibrate(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = context.getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        val vibrator = vibratorManager.defaultVibrator
+        vibrator.vibrate(VibrationEffect.createOneShot(70, VibrationEffect.DEFAULT_AMPLITUDE))
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val vibrator = context.getSystemService(VIBRATOR_SERVICE) as Vibrator
+        vibrator.vibrate(VibrationEffect.createOneShot(70, VibrationEffect.DEFAULT_AMPLITUDE))
+    } else {
+        val vibrator = context.getSystemService(VIBRATOR_SERVICE) as Vibrator
+        vibrator.vibrate(70)
     }
 }
