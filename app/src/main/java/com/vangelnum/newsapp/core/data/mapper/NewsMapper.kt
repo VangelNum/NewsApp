@@ -8,32 +8,61 @@ import com.vangelnum.newsapp.core.data.model.News
 import com.vangelnum.newsapp.core.data.model.Source
 
 
-fun NewsDto.toDomain(): News {
+fun NewsDto.toNews(): News {
     return News(
-        status = status,
-        totalResults = totalResults,
-        articles = articles.toDomain()
+        articles = this.articles.map { it.toArticle() },
+        status = this.status ?: "",
+        totalResults = this.totalResults
     )
 }
 
-fun List<ArticleDto>.toDomain(): List<Article> {
-    return this.map {
-        Article(
-            author = it.author,
-            content = it.content,
-            description = it.description,
-            publishedAt = it.publishedAt,
-            title = it.title,
-            url = it.url,
-            urlToImage = it.urlToImage,
-            source = it.source.toDomain()
-        )
-    }
+fun ArticleDto.toArticle(): Article {
+    return Article(
+        author = this.author ?: "",
+        content = this.content ?: "",
+        description = this.description ?: "",
+        publishedAt = this.publishedAt ?: "",
+        source = this.source.toSource(),
+        title = this.title,
+        url = this.url,
+        urlToImage = this.urlToImage ?: ""
+    )
 }
 
-private fun SourceDto.toDomain(): Source {
+fun SourceDto.toSource(): Source {
     return Source(
-        id = id,
-        name = name
+        id = this.id ?: "",
+        name = this.name
     )
 }
+
+
+//fun NewsDto.toDomain(): News {
+//    return News(
+//        status = status,
+//        totalResults = totalResults,
+//        articles = articles.toDomain()
+//    )
+//}
+//
+//fun List<ArticleDto>.toDomain(): List<Article> {
+//    return this.map {
+//        Article(
+//            author = it.author,
+//            content = it.content,
+//            description = it.description,
+//            publishedAt = it.publishedAt,
+//            title = it.title,
+//            url = it.url,
+//            urlToImage = it.urlToImage,
+//            source = it.source.toDomain()
+//        )
+//    }
+//}
+//
+//private fun SourceDto.toDomain(): Source {
+//    return Source(
+//        id = id,
+//        name = name
+//    )
+//}

@@ -1,7 +1,7 @@
 package com.vangelnum.newsapp.feature_search.data.repository
 
 import com.vangelnum.newsapp.core.common.Resource
-import com.vangelnum.newsapp.core.data.mapper.toDomain
+import com.vangelnum.newsapp.core.data.mapper.toNews
 import com.vangelnum.newsapp.core.data.model.News
 import com.vangelnum.newsapp.feature_search.data.api.ApiSearch
 import com.vangelnum.newsapp.feature_search.domain.repository.SearchRepository
@@ -19,8 +19,8 @@ class SearchRepositoryImpl @Inject constructor(
         to: String?
     ): Flow<Resource<News>> = flow {
         try {
-            val response = api.getSearchNews(query, sortBy, from, to)
-            emit(Resource.Success(response.toDomain()))
+            val response = api.getSearchNews(query, sortBy, from, to).toNews()
+            emit(Resource.Success(response))
         } catch (e: Exception) {
             emit(Resource.Error(e.message.toString()))
         }

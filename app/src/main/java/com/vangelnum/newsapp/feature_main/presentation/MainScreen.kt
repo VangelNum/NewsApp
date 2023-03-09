@@ -42,132 +42,134 @@ fun MainScreen(
     val context = LocalContext.current
     val listState = rememberLazyListState()
     LazyColumn(state = listState) {
-        items(photos.data?.articles!!) {
-            Box(modifier = Modifier.clickable {
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it.url))
-                context.startActivity(browserIntent)
-            }) {
-                Column {
-                    if (it.urlToImage != "null") {
-                        Card(
-                            shape = RoundedCornerShape(15.dp),
-                            modifier = Modifier
-                                .height(250.dp)
-                                .padding(all = 10.dp)
-                                .fillMaxWidth()
-                        ) {
-                            SubcomposeAsyncImage(
-                                model = it.urlToImage,
-                                contentDescription = "image",
-                                contentScale = ContentScale.FillBounds,
-                                loading = {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color.Black),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(color = Color.Green)
+        if (photos.data?.articles!=null) {
+            items(photos.data.articles) {
+                Box(modifier = Modifier.clickable {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it.url))
+                    context.startActivity(browserIntent)
+                }) {
+                    Column {
+                        if (it.urlToImage != "null") {
+                            Card(
+                                shape = RoundedCornerShape(15.dp),
+                                modifier = Modifier
+                                    .height(250.dp)
+                                    .padding(all = 10.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                SubcomposeAsyncImage(
+                                    model = it.urlToImage,
+                                    contentDescription = "image",
+                                    contentScale = ContentScale.FillBounds,
+                                    loading = {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(color = Color.Green)
+                                        }
                                     }
-                                }
-                            )
+                                )
 
-                        }
-                    }
-                    Text(
-                        text = it.title,
-                        textAlign = TextAlign.Start,
-                        modifier = Modifier.padding(start = 15.dp, end = 15.dp),
-                        color = Color.White,
-                        maxLines = 3,
-                        fontSize = 20.sp,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(15.dp),
-                    ) {
-                        val result = it.publishedAt
-                        val result2 = result.substring(0, 10) + ' ' + result.substring(11, 16)
-
-                        Text(text = result2, fontSize = 16.sp)
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        var tint by remember {
-                            mutableStateOf(Color.White)
-                        }
-
-                        news?.forEach { new ->
-                            if (it.urlToImage != null) {
-                                if (it.urlToImage.contains(new.urlPhoto)) {
-                                    tint = Color.Red
-                                }
-                            } else {
-                                tint = Color.White
                             }
                         }
-                        CompositionLocalProvider(
-                            LocalMinimumInteractiveComponentEnforcement provides false,
+                        Text(
+                            text = it.title,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier.padding(start = 15.dp, end = 15.dp),
+                            color = Color.White,
+                            maxLines = 3,
+                            fontSize = 20.sp,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(15.dp),
                         ) {
-                            IconButton(onClick = {
-                                if (tint == Color.White) {
-                                    viewModelRoom.addNewsDataBase(
-                                        FavouriteData(
-                                            it.urlToImage,
-                                            it.description,
-                                            result2
-                                        )
-                                    )
-                                    tint = Color.Red
+                            val result = it.publishedAt
+                            val result2 = result.substring(0, 10) + ' ' + result.substring(11, 16)
+
+                            Text(text = result2, fontSize = 16.sp)
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            var tint by remember {
+                                mutableStateOf(Color.White)
+                            }
+
+                            news?.forEach { new ->
+                                if (it.urlToImage != null) {
+                                    if (it.urlToImage.contains(new.urlPhoto)) {
+                                        tint = Color.Red
+                                    }
                                 } else {
-                                    viewModelRoom.deleteNewsDataBase(
-                                        FavouriteData(
-                                            it.urlToImage,
-                                            it.description,
-                                            result2
-                                        )
-                                    )
                                     tint = Color.White
                                 }
-                            }) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_baseline_favorite_24),
-                                    contentDescription = "favourite", tint = tint
-                                )
+                            }
+                            CompositionLocalProvider(
+                                LocalMinimumInteractiveComponentEnforcement provides false,
+                            ) {
+                                IconButton(onClick = {
+                                    if (tint == Color.White) {
+                                        viewModelRoom.addNewsDataBase(
+                                            FavouriteData(
+                                                it.urlToImage,
+                                                it.description,
+                                                result2
+                                            )
+                                        )
+                                        tint = Color.Red
+                                    } else {
+                                        viewModelRoom.deleteNewsDataBase(
+                                            FavouriteData(
+                                                it.urlToImage,
+                                                it.description,
+                                                result2
+                                            )
+                                        )
+                                        tint = Color.White
+                                    }
+                                }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_baseline_favorite_24),
+                                        contentDescription = "favourite", tint = tint
+                                    )
 
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(20.dp))
-                        CompositionLocalProvider(
-                            LocalMinimumInteractiveComponentEnforcement provides false,
-                        ) {
-                            IconButton(onClick = {
-                                val sendIntent: Intent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    putExtra(Intent.EXTRA_TEXT, it.url)
-                                    type = "text/plain"
                                 }
-                                val shareIntent = Intent.createChooser(sendIntent, null)
-                                context.startActivity(shareIntent)
-                            }) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_baseline_share_24),
-                                    contentDescription = "share"
-                                )
+                            }
+                            Spacer(modifier = Modifier.width(20.dp))
+                            CompositionLocalProvider(
+                                LocalMinimumInteractiveComponentEnforcement provides false,
+                            ) {
+                                IconButton(onClick = {
+                                    val sendIntent: Intent = Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        putExtra(Intent.EXTRA_TEXT, it.url)
+                                        type = "text/plain"
+                                    }
+                                    val shareIntent = Intent.createChooser(sendIntent, null)
+                                    context.startActivity(shareIntent)
+                                }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_baseline_share_24),
+                                        contentDescription = "share"
+                                    )
+                                }
                             }
                         }
+                        Divider(
+                            modifier = Modifier
+                                .height(1.dp)
+                                .fillMaxWidth(), color = Color.Gray
+                        )
                     }
-                    Divider(
-                        modifier = Modifier
-                            .height(1.dp)
-                            .fillMaxWidth(), color = Color.Gray
-                    )
+
                 }
 
+
             }
-
-
         }
     }
     val scope = rememberCoroutineScope()

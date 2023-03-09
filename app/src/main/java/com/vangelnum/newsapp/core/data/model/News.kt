@@ -2,7 +2,7 @@ package com.vangelnum.newsapp.core.data.model
 
 data class News(
     val articles: List<Article>,
-    val status: String?,
+    val status: String,
     var totalResults: Int
 )
 
