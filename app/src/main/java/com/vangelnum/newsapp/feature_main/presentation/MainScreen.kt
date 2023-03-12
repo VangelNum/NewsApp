@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
@@ -36,9 +36,9 @@ import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -46,10 +46,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
+import com.vangelnum.newsapp.R
 import com.vangelnum.newsapp.core.common.Resource
 import com.vangelnum.newsapp.core.domain.model.Article
 import com.vangelnum.newsapp.core.domain.model.News
@@ -61,7 +63,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainScreen(
     favouriteViewModel: FavouriteViewModel,
-    viewModelMain: MainViewModel = hiltViewModel()
+    viewModelMain: MainViewModel = hiltViewModel(),
+    favouriteState: State<Resource<List<FavouriteData>>>
+
 ) {
     val response = viewModelMain.items.collectAsState()
 
@@ -81,7 +85,8 @@ fun MainScreen(
         is Resource.Success -> {
             MainContent(
                 items = response.value.data!!,
-                favouriteViewModel = favouriteViewModel
+                favouriteViewModel = favouriteViewModel,
+                favouriteState = favouriteState
             )
         }
 
@@ -89,19 +94,29 @@ fun MainScreen(
 }
 
 @Composable
-fun MainContent(items: News, favouriteViewModel: FavouriteViewModel) {
+fun MainContent(
+    items: News,
+    favouriteViewModel: FavouriteViewModel,
+    favouriteState: State<Resource<List<FavouriteData>>>
+) {
     val lazyListState = rememberLazyListState()
     val isVisible = remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 } }
+    val scope = rememberCoroutineScope()
     LazyColumn(
         state = lazyListState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp)
     ) {
-        items(items.articles) { article ->
-            MainCard(article = article, favouriteViewModel = favouriteViewModel)
+        itemsIndexed(items.articles) { index, article ->
+            if (article.urlToImage.isNotEmpty()) {
+                MainCard(article = article, favouriteViewModel = favouriteViewModel, favouriteState)
+                if (index < items.articles.lastIndex) {
+                    Divider(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.onSurface)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
         }
     }
-    val scope = rememberCoroutineScope()
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
         AnimatedVisibility(visible = isVisible.value,
             enter = slideInHorizontally {
@@ -126,7 +141,11 @@ fun MainContent(items: News, favouriteViewModel: FavouriteViewModel) {
 }
 
 @Composable
-fun MainCard(article: Article, favouriteViewModel: FavouriteViewModel) {
+fun MainCard(
+    article: Article,
+    favouriteViewModel: FavouriteViewModel,
+    favouriteState: State<Resource<List<FavouriteData>>>
+) {
     Card(
         shape = MaterialTheme.shapes.large
     ) {
@@ -142,30 +161,42 @@ fun MainCard(article: Article, favouriteViewModel: FavouriteViewModel) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
+                },
+                error = {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(text = stringResource(id = R.string.error_image))
+                    }
                 }
             )
         }
     }
     Spacer(modifier = Modifier.height(8.dp))
-    MainTitle(article = article, favouriteViewModel = favouriteViewModel)
+    MainTitle(article = article, favouriteViewModel = favouriteViewModel, favouriteState)
 }
 
 @Composable
-fun MainTitle(article: Article, favouriteViewModel: FavouriteViewModel) {
+fun MainTitle(
+    article: Article,
+    favouriteViewModel: FavouriteViewModel,
+    favouriteState: State<Resource<List<FavouriteData>>>
+) {
     Text(
         text = article.title,
         maxLines = 3,
         overflow = TextOverflow.Ellipsis,
         style = MaterialTheme.typography.h3,
     )
-    MainRowItems(article, favouriteViewModel)
+    MainRowItems(article, favouriteViewModel, itemsFavourite = favouriteState)
 }
 
 
 @Composable
-fun MainRowItems(article: Article, favouriteViewModel: FavouriteViewModel) {
+fun MainRowItems(
+    article: Article,
+    favouriteViewModel: FavouriteViewModel,
+    itemsFavourite: State<Resource<List<FavouriteData>>>
+) {
     val context = LocalContext.current
-    val itemsFavourite = favouriteViewModel.readAllData.observeAsState()
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
@@ -177,7 +208,7 @@ fun MainRowItems(article: Article, favouriteViewModel: FavouriteViewModel) {
         Spacer(modifier = Modifier.weight(1f))
         IconButton(onClick = {
             vibrate(context)
-            if (itemsFavourite.value?.toString()?.contains(article.urlToImage) == false) {
+            if (itemsFavourite.value.data?.toString()?.contains(article.urlToImage) == false) {
                 addToDatabase(favouriteViewModel, article.urlToImage, article.content, publishedAt)
             } else {
                 deleteFromDatabase(
@@ -191,7 +222,7 @@ fun MainRowItems(article: Article, favouriteViewModel: FavouriteViewModel) {
             Icon(
                 imageVector = Icons.Outlined.Favorite,
                 contentDescription = "favourite",
-                tint = if (itemsFavourite.value?.toString()
+                tint = if (itemsFavourite.value.data?.toString()
                         ?.contains(article.urlToImage) == true
                 ) Color.Red else Color.White
             )
@@ -202,8 +233,6 @@ fun MainRowItems(article: Article, favouriteViewModel: FavouriteViewModel) {
             Icon(imageVector = Icons.Outlined.Share, contentDescription = "share")
         }
     }
-    Divider(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.onSurface)
-    Spacer(modifier = Modifier.height(16.dp))
 }
 
 private fun addToDatabase(

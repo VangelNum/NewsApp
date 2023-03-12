@@ -1,10 +1,11 @@
 package com.vangelnum.newsapp.feature_favourite.domain.repository
 
-import androidx.lifecycle.LiveData
+import com.vangelnum.newsapp.core.common.Resource
 import com.vangelnum.newsapp.feature_favourite.data.model.FavouriteData
+import kotlinx.coroutines.flow.Flow
 
 interface FavouriteRepository {
-    fun getAll(): LiveData<List<FavouriteData>>
+    fun getAll(): Flow<Resource<List<FavouriteData>>>
 
     suspend fun addNews(news: FavouriteData)
 
