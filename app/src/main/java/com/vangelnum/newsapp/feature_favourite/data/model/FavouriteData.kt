@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class FavouriteData(
     @PrimaryKey(autoGenerate = false)
     val urlPhoto: String,
+    val url: String,
     val content: String,
     val time: String,
 )

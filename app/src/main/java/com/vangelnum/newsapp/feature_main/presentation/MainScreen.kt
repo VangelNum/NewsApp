@@ -1,16 +1,9 @@
 package com.vangelnum.newsapp.feature_main.presentation
 
-import android.content.Context
-import android.content.Context.VIBRATOR_MANAGER_SERVICE
-import android.content.Context.VIBRATOR_SERVICE
-import android.content.Intent
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -65,10 +58,8 @@ fun MainScreen(
     favouriteViewModel: FavouriteViewModel,
     viewModelMain: MainViewModel = hiltViewModel(),
     favouriteState: State<Resource<List<FavouriteData>>>
-
 ) {
     val response = viewModelMain.items.collectAsState()
-
     when (response.value) {
         is Resource.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -86,7 +77,8 @@ fun MainScreen(
             MainContent(
                 items = response.value.data!!,
                 favouriteViewModel = favouriteViewModel,
-                favouriteState = favouriteState
+                favouriteState = favouriteState,
+                viewModelMain = viewModelMain
             )
         }
 
@@ -97,7 +89,8 @@ fun MainScreen(
 fun MainContent(
     items: News,
     favouriteViewModel: FavouriteViewModel,
-    favouriteState: State<Resource<List<FavouriteData>>>
+    favouriteState: State<Resource<List<FavouriteData>>>,
+    viewModelMain: MainViewModel
 ) {
     val lazyListState = rememberLazyListState()
     val isVisible = remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 } }
@@ -109,9 +102,17 @@ fun MainContent(
     ) {
         itemsIndexed(items.articles) { index, article ->
             if (article.urlToImage.isNotEmpty()) {
-                MainCard(article = article, favouriteViewModel = favouriteViewModel, favouriteState)
+                MainCard(
+                    article = article,
+                    favouriteViewModel = favouriteViewModel,
+                    favouriteState = favouriteState,
+                    viewModelMain = viewModelMain
+                )
                 if (index < items.articles.lastIndex) {
-                    Divider(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.onSurface)
+                    Divider(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colors.onSurface
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
@@ -144,10 +145,15 @@ fun MainContent(
 fun MainCard(
     article: Article,
     favouriteViewModel: FavouriteViewModel,
-    favouriteState: State<Resource<List<FavouriteData>>>
+    favouriteState: State<Resource<List<FavouriteData>>>,
+    viewModelMain: MainViewModel
 ) {
+    val context = LocalContext.current
     Card(
-        shape = MaterialTheme.shapes.large
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.clickable {
+            viewModelMain.goToBrowser(article.url, context)
+        }
     ) {
         if (article.urlToImage != "") {
             SubcomposeAsyncImage(
@@ -171,14 +177,20 @@ fun MainCard(
         }
     }
     Spacer(modifier = Modifier.height(8.dp))
-    MainTitle(article = article, favouriteViewModel = favouriteViewModel, favouriteState)
+    MainTitle(
+        article = article,
+        favouriteViewModel = favouriteViewModel,
+        favouriteState = favouriteState,
+        viewModelMain = viewModelMain
+    )
 }
 
 @Composable
 fun MainTitle(
     article: Article,
     favouriteViewModel: FavouriteViewModel,
-    favouriteState: State<Resource<List<FavouriteData>>>
+    favouriteState: State<Resource<List<FavouriteData>>>,
+    viewModelMain: MainViewModel
 ) {
     Text(
         text = article.title,
@@ -186,7 +198,12 @@ fun MainTitle(
         overflow = TextOverflow.Ellipsis,
         style = MaterialTheme.typography.h3,
     )
-    MainRowItems(article, favouriteViewModel, itemsFavourite = favouriteState)
+    MainRowItems(
+        article = article,
+        favouriteViewModel = favouriteViewModel,
+        itemsFavourite = favouriteState,
+        viewModelMain = viewModelMain
+    )
 }
 
 
@@ -194,7 +211,8 @@ fun MainTitle(
 fun MainRowItems(
     article: Article,
     favouriteViewModel: FavouriteViewModel,
-    itemsFavourite: State<Resource<List<FavouriteData>>>
+    itemsFavourite: State<Resource<List<FavouriteData>>>,
+    viewModelMain: MainViewModel
 ) {
     val context = LocalContext.current
     Row(
@@ -207,15 +225,22 @@ fun MainRowItems(
         Text(text = publishedAt)
         Spacer(modifier = Modifier.weight(1f))
         IconButton(onClick = {
-            vibrate(context)
+            viewModelMain.vibrate(context)
             if (itemsFavourite.value.data?.toString()?.contains(article.urlToImage) == false) {
-                addToDatabase(favouriteViewModel, article.urlToImage, article.content, publishedAt)
+                addToDatabase(
+                    favouriteViewModel = favouriteViewModel,
+                    url = article.url,
+                    urlToImage = article.urlToImage,
+                    content = article.content,
+                    publishedAt = article.publishedAt
+                )
             } else {
                 deleteFromDatabase(
-                    favouriteViewModel,
-                    article.urlToImage,
-                    article.content,
-                    publishedAt
+                    favouriteViewModel = favouriteViewModel,
+                    url = article.url,
+                    urlToImage = article.urlToImage,
+                    content = article.content,
+                    publishedAt = article.publishedAt
                 )
             }
         }) {
@@ -228,7 +253,7 @@ fun MainRowItems(
             )
         }
         IconButton(onClick = {
-            share(context, article.url)
+            viewModelMain.share(context, article.url)
         }) {
             Icon(imageVector = Icons.Outlined.Share, contentDescription = "share")
         }
@@ -237,55 +262,34 @@ fun MainRowItems(
 
 private fun addToDatabase(
     favouriteViewModel: FavouriteViewModel,
+    url: String,
     urlToImage: String,
     content: String,
     publishedAt: String
 ) {
     favouriteViewModel.addNewsDataBase(
         FavouriteData(
-            urlToImage,
-            content,
-            publishedAt
+            urlPhoto = urlToImage,
+            url = url,
+            content = content,
+            time = publishedAt
         )
     )
 }
 
 private fun deleteFromDatabase(
     favouriteViewModel: FavouriteViewModel,
+    url: String,
     urlToImage: String,
     content: String,
     publishedAt: String
 ) {
     favouriteViewModel.deleteNewsDataBase(
         FavouriteData(
-            urlToImage,
-            content,
-            publishedAt
+            urlPhoto = urlToImage,
+            url = url,
+            content = content,
+            time = publishedAt
         )
     )
-}
-
-private fun share(context: Context, url: String) {
-    val sendIntent: Intent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, url)
-        type = "text/plain"
-    }
-    val shareIntent = Intent.createChooser(sendIntent, null)
-    context.startActivity(shareIntent)
-}
-
-@Suppress("DEPRECATION")
-private fun vibrate(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = context.getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        val vibrator = vibratorManager.defaultVibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(70, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val vibrator = context.getSystemService(VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(70, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else {
-        val vibrator = context.getSystemService(VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(70)
-    }
 }

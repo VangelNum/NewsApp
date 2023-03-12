@@ -8,7 +8,6 @@ sealed class Screens(val icon: Int, val route: String, val title: String) {
     object SearchScreen : Screens(R.drawable.ic_baseline_search_24, "search_screen", "Search")
 
     object ContactScreen : Screens(R.drawable.ic_baseline_search_24, "contact_screen", "Contact")
-    object FilterScreen : Screens(R.drawable.ic_baseline_search_24, "filter_screen", "Filter")
 
     fun withArgs(vararg args: String): String {
         return buildString {

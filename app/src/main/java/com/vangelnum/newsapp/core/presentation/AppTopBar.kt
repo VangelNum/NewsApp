@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,11 +28,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vangelnum.newsapp.R
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
-fun AppTopBar(scope: CoroutineScope, scaffoldState: ScaffoldState) {
+fun AppTopBar(scaffoldState: ScaffoldState) {
+    val scope = rememberCoroutineScope()
     val appBarHorizontalPadding = 4.dp
     val titleIconModifier = Modifier
         .fillMaxHeight()

@@ -1,14 +1,9 @@
 package com.vangelnum.newsapp.feature_favourite.presentation
 
-import android.content.Context
-import android.content.Intent
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -118,8 +113,12 @@ fun FavouriteScreen(
 
 @Composable
 fun FavouriteCard(favouriteData: FavouriteData, favouriteViewModel: FavouriteViewModel) {
+    val context = LocalContext.current
     Card(
-        shape = MaterialTheme.shapes.large
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.clickable {
+            favouriteViewModel.goToBrowser(favouriteData.url, context)
+        }
     ) {
         SubcomposeAsyncImage(
             model = favouriteData.urlPhoto,
@@ -166,10 +165,11 @@ fun FavouriteRowItems(favouriteData: FavouriteData, favouriteViewModel: Favourit
         Text(text = favouriteData.time)
         Spacer(modifier = Modifier.weight(1f))
         IconButton(onClick = {
-            vibrate(context)
+            favouriteViewModel.vibrate(context)
             favouriteViewModel.deleteNewsDataBase(
                 FavouriteData(
                     favouriteData.urlPhoto,
+                    favouriteData.url,
                     favouriteData.content,
                     favouriteData.time
                 )
@@ -181,7 +181,7 @@ fun FavouriteRowItems(favouriteData: FavouriteData, favouriteViewModel: Favourit
             )
         }
         IconButton(onClick = {
-            share(context, favouriteData.urlPhoto)
+            favouriteViewModel.share(context, favouriteData.urlPhoto)
         }) {
             Icon(imageVector = Icons.Outlined.Share, contentDescription = "share")
         }
@@ -189,30 +189,3 @@ fun FavouriteRowItems(favouriteData: FavouriteData, favouriteViewModel: Favourit
     Divider(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.onSurface)
     Spacer(modifier = Modifier.height(16.dp))
 }
-
-private fun share(context: Context, urlPhoto: String) {
-    val sendIntent: Intent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, urlPhoto)
-        type = "text/plain"
-    }
-    val shareIntent = Intent.createChooser(sendIntent, null)
-    context.startActivity(shareIntent)
-}
-
-@Suppress("DEPRECATION")
-private fun vibrate(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager =
-            context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        val vibrator = vibratorManager.defaultVibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(70, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(70, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(70)
-    }
-}
-

@@ -1,11 +1,10 @@
 package com.vangelnum.newsapp.feature_search.presentation
 
-import android.content.Context
-import android.content.Intent
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +29,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Share
@@ -53,12 +51,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
+import com.vangelnum.newsapp.FilterContent
 import com.vangelnum.newsapp.R
 import com.vangelnum.newsapp.core.common.Resource
 import com.vangelnum.newsapp.core.domain.model.Article
@@ -86,6 +86,10 @@ fun SearchScreen(
     LaunchedEffect(key1 = true) {
         focusRequester.requestFocus()
     }
+    var expanded by remember {
+        mutableStateOf(false)
+    }
+    val mContext = LocalContext.current
     Column(modifier = Modifier.fillMaxSize()) {
         OutlinedTextField(
             value = textValue,
@@ -93,10 +97,12 @@ fun SearchScreen(
                 textValue = newText
             },
             trailingIcon = {
-                IconButton(onClick = { textValue = "" }) {
+                IconButton(onClick = {
+                    expanded = !expanded
+                }) {
                     Icon(
-                        imageVector = Icons.Outlined.Close,
-                        contentDescription = "close"
+                        painter = painterResource(id = R.drawable.ic_baseline_sort_24),
+                        contentDescription = "sort"
                     )
                 }
             },
@@ -132,6 +138,14 @@ fun SearchScreen(
                 }
             )
         )
+        AnimatedVisibility(visible = expanded, enter = expandVertically(animationSpec = tween(500)) {
+            -it
+        }, exit = shrinkVertically(animationSpec = tween(500)) {
+            -it
+        }
+        ) {
+            FilterContent(query = textValue, searchViewModel = viewModelSearch, mContext = mContext)
+        }
         when (newsFromSearch) {
             is SearchResource.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -146,7 +160,12 @@ fun SearchScreen(
             }
 
             is SearchResource.Success -> {
-                FavouriteContent(newsFromSearch, favouriteState, favouriteViewModel)
+                FavouriteContent(
+                    newsFromSearch,
+                    favouriteState,
+                    favouriteViewModel,
+                    viewModelSearch
+                )
             }
 
             is SearchResource.Empty -> {
@@ -164,7 +183,8 @@ fun SearchScreen(
 fun FavouriteContent(
     newsFromSearch: SearchResource<News>,
     favouriteState: State<Resource<List<FavouriteData>>>,
-    favouriteViewModel: FavouriteViewModel
+    favouriteViewModel: FavouriteViewModel,
+    viewModelSearch: SearchViewModel
 ) {
     val lazyListState = rememberLazyListState()
 
@@ -176,7 +196,7 @@ fun FavouriteContent(
         ) {
             itemsIndexed(newsFromSearch.data.articles) { index, item ->
                 if (item.urlToImage.isNotEmpty()) {
-                    SearchCard(item, favouriteState, favouriteViewModel)
+                    SearchCard(item, favouriteState, favouriteViewModel, viewModelSearch)
                     if (index < newsFromSearch.data.articles.lastIndex) {
                         Divider(
                             modifier = Modifier.fillMaxSize(),
@@ -198,10 +218,15 @@ fun FavouriteContent(
 fun SearchCard(
     item: Article,
     favouriteState: State<Resource<List<FavouriteData>>>,
-    favouriteViewModel: FavouriteViewModel
+    favouriteViewModel: FavouriteViewModel,
+    viewModelSearch: SearchViewModel
 ) {
+    val context = LocalContext.current
     Card(
-        shape = MaterialTheme.shapes.large
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.clickable {
+            viewModelSearch.goToBrowser(item.url, context)
+        }
     ) {
         SubcomposeAsyncImage(
             model = item.urlToImage,
@@ -230,14 +255,15 @@ fun SearchCard(
 
     }
     Spacer(modifier = Modifier.height(8.dp))
-    SearchTitle(item, favouriteState, favouriteViewModel)
+    SearchTitle(item, favouriteState, favouriteViewModel, viewModelSearch)
 }
 
 @Composable
 fun SearchTitle(
     article: Article,
     favouriteState: State<Resource<List<FavouriteData>>>,
-    favouriteViewModel: FavouriteViewModel
+    favouriteViewModel: FavouriteViewModel,
+    viewModelSearch: SearchViewModel
 ) {
     Text(
         text = article.title,
@@ -245,16 +271,15 @@ fun SearchTitle(
         overflow = TextOverflow.Ellipsis,
         style = MaterialTheme.typography.h3,
     )
-    SearchRowItems(article, favouriteState, favouriteViewModel)
-
-
+    SearchRowItems(article, favouriteState, favouriteViewModel, viewModelSearch)
 }
 
 @Composable
 fun SearchRowItems(
     article: Article,
     favouriteState: State<Resource<List<FavouriteData>>>,
-    favouriteViewModel: FavouriteViewModel
+    favouriteViewModel: FavouriteViewModel,
+    searchViewModel: SearchViewModel
 ) {
     val context = LocalContext.current
     Row(
@@ -268,20 +293,22 @@ fun SearchRowItems(
         Spacer(modifier = Modifier.weight(1f))
 
         IconButton(onClick = {
-            vibrate(context)
+            searchViewModel.vibrate(context)
             if (favouriteState.value.data?.toString()?.contains(article.urlToImage) == false) {
                 addToDatabase(
-                    favouriteViewModel,
-                    article.urlToImage,
-                    article.content,
-                    article.publishedAt
+                    favouriteViewModel = favouriteViewModel,
+                    url = article.url,
+                    urlToImage = article.urlToImage,
+                    content = article.content,
+                    publishedAt = article.publishedAt
                 )
             } else {
                 deleteFromDatabase(
-                    favouriteViewModel,
-                    article.urlToImage,
-                    article.content,
-                    article.publishedAt
+                    favouriteViewModel = favouriteViewModel,
+                    url = article.url,
+                    urlToImage = article.urlToImage,
+                    content = article.content,
+                    publishedAt = article.publishedAt
                 )
             }
         }) {
@@ -294,7 +321,7 @@ fun SearchRowItems(
             )
         }
         IconButton(onClick = {
-            share(context, article.url)
+            searchViewModel.share(context, article.url)
         }) {
             Icon(imageVector = Icons.Outlined.Share, contentDescription = "share")
         }
@@ -304,56 +331,34 @@ fun SearchRowItems(
 
 private fun addToDatabase(
     favouriteViewModel: FavouriteViewModel,
+    url: String,
     urlToImage: String,
     content: String,
     publishedAt: String
 ) {
     favouriteViewModel.addNewsDataBase(
         FavouriteData(
-            urlToImage,
-            content,
-            publishedAt
+            urlPhoto = urlToImage,
+            url = url,
+            content = content,
+            time = publishedAt
         )
     )
 }
 
 private fun deleteFromDatabase(
     favouriteViewModel: FavouriteViewModel,
+    url: String,
     urlToImage: String,
     content: String,
     publishedAt: String
 ) {
     favouriteViewModel.deleteNewsDataBase(
         FavouriteData(
-            urlToImage,
-            content,
-            publishedAt
+            urlPhoto = urlToImage,
+            url = url,
+            content = content,
+            time = publishedAt
         )
     )
-}
-
-private fun share(context: Context, url: String) {
-    val sendIntent: Intent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, url)
-        type = "text/plain"
-    }
-    val shareIntent = Intent.createChooser(sendIntent, null)
-    context.startActivity(shareIntent)
-}
-
-@Suppress("DEPRECATION")
-private fun vibrate(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager =
-            context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        val vibrator = vibratorManager.defaultVibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(70, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(70, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(70)
-    }
 }

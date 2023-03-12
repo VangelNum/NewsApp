@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">NewsApp</string>
-    <string name="error_image">Error loading image</string>
-    <string name="search">Search\n</string>
+    <string  name="error_image">Error loading image</string>
+    <string name="search">Search</string>
     <string name="cancel">Отменить</string>
     <string name="nothing_found">Nothing found</string>
     <string name="search_something">Search Something</string>
@@ -10,4 +10,8 @@
     <string name="news">News</string>
     <string name="vk_com_vangelnum">"<u>VK.COM/VANGELNUM</u>"</string>
     <string name="gmail_vangelnum">"<u>VANGELNUM@GMAIL.COM</u>"</string>
+    <string name="apply">Применить</string>
+    <string name="from">From</string>
+    <string name="to">To</string>
+    <string name="sorted_by">Sorted by</string>
 </resources>
