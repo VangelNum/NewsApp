@@ -38,7 +38,7 @@ fun ContactScreen(contactViewModel: ContactViewModel) {
         )
         Text(
             text = stringResource(id = R.string.vk_com_vangelnum),
-            style = MaterialTheme.typography.h3.copy(
+            style = MaterialTheme.typography.h4.copy(
                 fontSize = 24.sp
             ),
             textAlign = TextAlign.Center,
