@@ -22,7 +22,7 @@ Navigation Compose is a navigation library for Jetpack Compose. It simplifies th
 
 Application screenshots:
 
-![image](https://user-images.githubusercontent.com/91003195/224975951-314fa609-2cd4-4c14-96cf-69c2e1846574.png)
+![image](https://user-images.githubusercontent.com/91003195/224978315-5584e97c-13e1-43bb-890c-5e0f9912187e.png)
 ![image](https://user-images.githubusercontent.com/91003195/224975979-448d6ebf-f28a-4e16-9245-41e9241c7bfe.png)
 ![image](https://user-images.githubusercontent.com/91003195/224976003-690153e9-7acf-4a13-a47a-f8b09f0a1b27.png)
 ![image](https://user-images.githubusercontent.com/91003195/224976021-c39cc202-72f4-42ec-b19f-6307be2b47c2.png)
