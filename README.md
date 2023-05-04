@@ -1,5 +1,21 @@
 # NewsApp
-Technologies used:
+
+## How to start using:
+1. Follow the link https://newsapi.org/
+2. Create an account and copy API key
+3. In project go to newsapp -> core -> utils -> Constants
+4. Change API key on your own
+
+```
+object Constants 
+{
+    const val BASE_URL = "https://newsapi.org/"
+    const val API_KEY = ""
+}
+```
+
+## Technologies used:
+
 MVVM stands for Model-View-ViewModel, which is a software architectural pattern used in the development of user interfaces. It separates the user interface logic from the business logic and data access layer, resulting in a more modular and maintainable codebase.
 
 Clean Architecture is a software architecture pattern that focuses on separation of concerns and independence of frameworks, libraries, and external dependencies. It consists of multiple layers with clear responsibilities and boundaries, and each layer only depends on the layers beneath it.
@@ -20,7 +36,7 @@ Coil is an image loading library for Android applications. It provides a lightwe
 
 Navigation Compose is a navigation library for Jetpack Compose. It simplifies the process of building and managing navigation within an Android application by providing a declarative API for defining navigation graphs and destinations.
 
-Application screenshots:
+##Application screenshots:
 
 ![image](https://user-images.githubusercontent.com/91003195/224978315-5584e97c-13e1-43bb-890c-5e0f9912187e.png)
 ![image](https://user-images.githubusercontent.com/91003195/224975979-448d6ebf-f28a-4e16-9245-41e9241c7bfe.png)
